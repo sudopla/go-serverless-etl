@@ -62,7 +62,8 @@ export class S3LambdaFargateStack extends cdk.Stack {
     const taskDefinition = new ecs.FargateTaskDefinition(this, 'CreateTenantTask', {
       cpu: 512, // .5 vCPU
       memoryLimitMiB: 1024, // Container memory
-      taskRole
+      taskRole,
+      volumes: [{ name: 'data_volume' }]
     })
 
     // Create log driver for container definition
@@ -75,13 +76,15 @@ export class S3LambdaFargateStack extends cdk.Stack {
     const containerImage = new ecs.AssetImage(path.join(__dirname, '..', '..', 'container'))
 
     // Add container definition to fargate task
-    taskDefinition.addContainer(containerName, {
+    const containerDefinition = taskDefinition.addContainer(containerName, {
       image: containerImage,
       environment: {
         EVENTBRIDGE_BUS_NAME: props.eventBusName
       },
       logging
     })
+    // Add volume to container definition - Encrypted by default
+    containerDefinition.addMountPoints({ sourceVolume: 'data_volume', containerPath: '/data_volume', readOnly: false })
 
     /**
      * Lambda that runs Fargate task after S3 event
@@ -91,10 +94,10 @@ export class S3LambdaFargateStack extends cdk.Stack {
       entry: path.join(__dirname, '..', '..', 'lambdas', 'RunFargateTask'),
       reservedConcurrentExecutions: 10,
       environment: {
-        clusterName: ecsClusterName,
-        taskDefinition: taskDefinition.taskDefinitionArn,
-        subnet1: vpc.publicSubnets[0].subnetId,
-        subnet2: vpc.publicSubnets[1].subnetId,
+        CLUSTER_NAME: ecsClusterName,
+        TASK_DEFINITION: taskDefinition.taskDefinitionArn,
+        SUBNET_1: vpc.publicSubnets[0].subnetId,
+        SUBNET_2: vpc.publicSubnets[1].subnetId,
         CONTAINER_NAME: containerName
       }
     })

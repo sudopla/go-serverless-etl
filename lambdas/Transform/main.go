@@ -2,19 +2,113 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"encoding/json"
+	"log"
+	"math"
+	"os"
+	"time"
 
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/eventbridge"
+	eventTypes "github.com/aws/aws-sdk-go-v2/service/eventbridge/types"
 )
 
-type MyEvent struct {
-	Name string `json:"name"`
+type BusEvent struct {
+	Version    string          `json:"version"`
+	ID         string          `json:"id"`
+	DetailType string          `json:"detail-type"`
+	Source     string          `json:"source"`
+	AccountID  string          `json:"account"`
+	Time       time.Time       `json:"time"`
+	Region     string          `json:"region"`
+	Resources  []string        `json:"resources"`
+	Detail     json.RawMessage `json:"detail"`
 }
 
-func HandleRequest(ctx context.Context, name MyEvent) (string, error) {
-	return fmt.Sprintf("Hello %s!", name.Name), nil
+type OriginalItem struct {
+	Street    string  `json:"street"`
+	City      string  `json:"city"`
+	Zip       string  `json:"zip"`
+	State     string  `json:"state"`
+	Beds      int     `json:"beds"`
+	Baths     int     `json:"baths"`
+	Sq_ft     int     `json:"sq__ft"`
+	Type      string  `json:"type"`
+	SalesDate string  `json:"sale_date"`
+	Price     int     `json:"price"`
+	Latitude  float64 `json:"latitude"`
+	Longitude float64 `json:"longitude"`
+}
+
+type TransformedItem struct {
+	OriginalItem
+	Status       string `json:"status"`
+	PricePerSqFt int    `json:"price_per_sq_ft"`
+}
+
+var (
+	eventBusName string
+	eventsClient *eventbridge.Client
+)
+
+func init() {
+	log.Println("Initializing Lambda execution environment")
+	log.Println("Initializing EventBridge client ...")
+	cfg, err := config.LoadDefaultConfig(context.TODO())
+	if err != nil {
+		log.Fatalf("unable to load SDK config, %v", err)
+	}
+	eventsClient = eventbridge.NewFromConfig(cfg)
+
+	log.Print("Getting environment variables ...")
+	eventBusName = os.Getenv("EVENTBRIDGE_BUS_NAME")
+}
+
+func handler(ctx context.Context, event BusEvent) {
+	// Apply transformations to item
+	var item = OriginalItem{}
+	if err := json.Unmarshal(event.Detail, &item); err != nil {
+		log.Fatalln("Could not unmarshall item - ", string(event.Detail))
+	}
+
+	log.Println("Parse date ...")
+	dLayout := "Wed May 21 00:00:00 EDT 2008"
+	dParsed, err := time.Parse(dLayout, item.SalesDate)
+	if err != nil {
+		panic(err)
+	}
+	item.SalesDate = dParsed.Format("2006-01-02")
+
+	log.Println("Add price per square foot")
+	pSqFt := int(math.Ceil(float64(item.Price) / float64(item.Sq_ft)))
+
+	transformedItem := TransformedItem{
+		OriginalItem: item,
+		Status:       "item_transformed",
+		PricePerSqFt: pSqFt,
+	}
+	details, err := json.Marshal(transformedItem)
+	if err != nil {
+		log.Fatalln("Could not serialize item. Error - ", err.Error())
+	}
+
+	// Send transformed item to EventBridge
+	log.Println("Send tranformed item to EventBridge")
+	_, err = eventsClient.PutEvents(context.TODO(), &eventbridge.PutEventsInput{
+		Entries: []eventTypes.PutEventsRequestEntry{{
+			EventBusName: aws.String(eventBusName),
+			Source:       aws.String("app.container"),
+			DetailType:   aws.String("extraction-process"),
+			Detail:       aws.String(string(details)),
+		}},
+	})
+	if err != nil {
+		log.Fatalf("Got error calling PutEvents %s", err)
+	}
 }
 
 func main() {
-	lambda.Start(HandleRequest)
+	lambda.Start(handler)
 }

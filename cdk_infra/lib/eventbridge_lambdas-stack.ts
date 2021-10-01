@@ -40,7 +40,7 @@ export class EventBridgeLambdasStack extends cdk.Stack {
       entry: path.join(__dirname, '..', '..', 'lambdas', 'Load'),
       reservedConcurrentExecutions: 10,
       environment: {
-        EVENTBRIDGE_BUS_NAME: props.eventBusName
+        TABLE_NAME: props.tableName
       }
     })
     loadLambda.addToRolePolicy(new iam.PolicyStatement({
@@ -61,7 +61,7 @@ export class EventBridgeLambdasStack extends cdk.Stack {
         source: ['app.container'],
         detailType: ['extraction-process'],
         detail: {
-          status: ['finished']
+          status: ['row_sent']
         }
       }
     })
@@ -79,7 +79,7 @@ export class EventBridgeLambdasStack extends cdk.Stack {
         source: ['app.trasnform'],
         detailType: ['transform-process'],
         detail: {
-          status: ['finished']
+          status: ['item_transformed']
         }
       }
     })
