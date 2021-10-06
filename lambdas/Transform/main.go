@@ -1,3 +1,6 @@
+// Lambda functions that gets trigger with EventBridge rule
+// It applies some changes on the item and sends it back to the bus
+
 package main
 
 import (
@@ -74,10 +77,10 @@ func handler(ctx context.Context, event BusEvent) {
 	}
 
 	log.Println("Parse date ...")
-	dLayout := "Wed May 21 00:00:00 EDT 2008"
+	dLayout := "Mon Jan 2 15:04:05 MST 2006"
 	dParsed, err := time.Parse(dLayout, item.SalesDate)
 	if err != nil {
-		panic(err)
+		log.Fatalln("Could not parse date. Error - ", err)
 	}
 	item.SalesDate = dParsed.Format("2006-01-02")
 

@@ -1,3 +1,6 @@
+// Lambda functions that gets trigger with EventBridge rule
+// It stores item in Dyanamo table
+
 package main
 
 import (
@@ -65,12 +68,12 @@ func init() {
 
 func handler(ctx context.Context, event BusEvent) {
 	item := DynamoItem{}
-	json.Unmarshal(event.Detail, item)
+	json.Unmarshal(event.Detail, &item)
 	item.Id = uuid.NewString()
 
 	av, err := attributevalue.MarshalMap(item)
 	if err != nil {
-		log.Fatalf("Got error marshalling new movie item: %s", err)
+		log.Fatalf("Got error marshalling item: %s", err)
 	}
 
 	_, err = dynamoClient.PutItem(context.TODO(), &dynamodb.PutItemInput{

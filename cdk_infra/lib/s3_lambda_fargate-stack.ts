@@ -59,7 +59,8 @@ export class S3LambdaFargateStack extends cdk.Stack {
     }))
 
     // Create Task Definition
-    const taskDefinition = new ecs.FargateTaskDefinition(this, 'CreateTenantTask', {
+    const taskDefinition = new ecs.FargateTaskDefinition(this, 'FarageTaskDefinition', {
+      family: 'IngestorFargateTask', // Name of the task
       cpu: 512, // .5 vCPU
       memoryLimitMiB: 1024, // Container memory
       taskRole,
@@ -68,7 +69,7 @@ export class S3LambdaFargateStack extends cdk.Stack {
 
     // Create log driver for container definition
     const logging = new ecs.AwsLogDriver({
-      logGroup: new log.LogGroup(this, 'FargateTaskLogs', { logGroupName: '/aws/ecs/FaragateTask', retention: log.RetentionDays.ONE_MONTH }),
+      logGroup: new log.LogGroup(this, 'FargateTaskLogs', { logGroupName: '/aws/ecs/IngestorFaragateTask', retention: log.RetentionDays.ONE_MONTH }),
       streamPrefix: 'app' // Prefix for the log streams
     })
 
@@ -105,7 +106,7 @@ export class S3LambdaFargateStack extends cdk.Stack {
     // Allow Lambda function to run the task
     runFargateLambda.addToRolePolicy(new iam.PolicyStatement({
       actions: perms.ECS_RUN_TASK,
-      resources: [`arn:aws:ecs:${this.region}:${this.account}:task-definition/${taskDefinition.taskDefinitionArn}`]
+      resources: [taskDefinition.taskDefinitionArn]
     }))
 
     // The Lambda function needs iam:PassRole to pass the task execution and task role to the Fargate task

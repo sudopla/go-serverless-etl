@@ -3,6 +3,7 @@ import 'source-map-support/register'
 import * as cdk from '@aws-cdk/core'
 import { DynamoStack } from './dynamo-stack'
 import { EventBridgeLambdasStack } from './eventbridge_lambdas-stack'
+import { CodePipelineStack } from './pipeline-stack'
 import { S3LambdaFargateStack } from './s3_lambda_fargate-stack'
 
 
@@ -10,6 +11,11 @@ const app = new cdk.App()
 
 const tableName = 'real-state'
 const eventBusName = 'etl-bus'
+
+new CodePipelineStack(app, 'DeploymentPipelineStack', {
+  repoOwner: 'sudopla',
+  repoName: 'go-serverless-etl'
+})
 
 new DynamoStack(app, 'TableStack', {
   tableName

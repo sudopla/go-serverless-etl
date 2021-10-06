@@ -1,5 +1,5 @@
 # Multi-Stage image
-FROM golang:1.12-alpine AS build_base
+FROM golang:1.17-alpine AS build_base
 
 RUN apk add --no-cache git build-base
 

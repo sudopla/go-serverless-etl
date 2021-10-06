@@ -1,3 +1,6 @@
+// Lambda function that gets triggered when file is uploaded to S3
+// It then runs a Fargate task
+
 package main
 
 import (
@@ -10,7 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/ecs"
-	"github.com/aws/aws-sdk-go-v2/service/ecs/types"
+	ecsTypes "github.com/aws/aws-sdk-go-v2/service/ecs/types"
 )
 
 var (
@@ -49,22 +52,24 @@ func handler(ctx context.Context, s3Event events.S3Event) {
 
 		log.Println("Start Fargate Task")
 		_, err := ecsClient.RunTask(context.TODO(), &ecs.RunTaskInput{
-			Cluster:        &clusterName,
-			TaskDefinition: &taskDefinition,
-			NetworkConfiguration: &types.NetworkConfiguration{
-				AwsvpcConfiguration: &types.AwsVpcConfiguration{
-					Subnets: []string{subnet1, subnet2},
+			Cluster:        aws.String(clusterName),
+			TaskDefinition: aws.String(taskDefinition),
+			NetworkConfiguration: &ecsTypes.NetworkConfiguration{
+				AwsvpcConfiguration: &ecsTypes.AwsVpcConfiguration{
+					Subnets:        []string{subnet1, subnet2},
+					AssignPublicIp: ecsTypes.AssignPublicIpEnabled, // Need this because container is running in public subnet
 				},
 			},
-			Overrides: &types.TaskOverride{
-				ContainerOverrides: []types.ContainerOverride{{
+			Overrides: &ecsTypes.TaskOverride{
+				ContainerOverrides: []ecsTypes.ContainerOverride{{
 					Name: &containerName,
-					Environment: []types.KeyValuePair{
-						{Name: aws.String("BUCKET"), Value: &bucket},
-						{Name: aws.String("KEY"), Value: &key},
+					Environment: []ecsTypes.KeyValuePair{
+						{Name: aws.String("BUCKET"), Value: aws.String(bucket)},
+						{Name: aws.String("KEY"), Value: aws.String(key)},
 					},
 				}},
 			},
+			LaunchType: ecsTypes.LaunchTypeFargate,
 		})
 
 		if err != nil {
