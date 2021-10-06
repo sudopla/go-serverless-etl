@@ -12,7 +12,7 @@ import (
 	"log"
 )
 
-// Function to that read items from channel and send them to EventBridge bus
+// Function that read items from channel and send them to EventBridge bus
 func SendEvents(eventsClient *eventbridge.Client, eventBusName string, ch chan map[string]string, wg *sync.WaitGroup) {
 	defer wg.Done()
 
