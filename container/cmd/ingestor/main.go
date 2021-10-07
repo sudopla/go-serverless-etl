@@ -34,7 +34,7 @@ func main() {
 	s3Downloader := s3Manager.NewDownloader(s3.NewFromConfig(cfg))
 	eventsClient := eventbridge.NewFromConfig(cfg)
 
-	log.Println("Download file")
+	log.Printf("Download file %s", key)
 	csvFile, err := os.Create("/data_volume/input.csv") // data_volume is the path where the container volume is mounted
 	if err != nil {
 		log.Fatal(err)

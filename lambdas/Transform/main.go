@@ -73,7 +73,7 @@ func handler(ctx context.Context, event BusEvent) {
 	// Apply transformations to item
 	var item = OriginalItem{}
 	if err := json.Unmarshal(event.Detail, &item); err != nil {
-		log.Fatalln("Could not unmarshall item - ", string(event.Detail))
+		log.Fatalf("Could not unmarshall item - %s\n Error - ", string(event.Detail), err)
 	}
 
 	log.Println("Parse date ...")
