@@ -76,7 +76,7 @@ export class EventBridgeLambdasStack extends cdk.Stack {
     const loadRule = new events.Rule(this, 'LoadRule', {
       eventBus,
       eventPattern: {
-        source: ['app.trasnform'],
+        source: ['app.transform'],
         detailType: ['transform-process'],
         detail: {
           status: ['item_transformed']

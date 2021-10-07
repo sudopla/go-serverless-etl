@@ -102,8 +102,8 @@ func handler(ctx context.Context, event BusEvent) {
 	_, err = eventsClient.PutEvents(context.TODO(), &eventbridge.PutEventsInput{
 		Entries: []eventTypes.PutEventsRequestEntry{{
 			EventBusName: aws.String(eventBusName),
-			Source:       aws.String("app.container"),
-			DetailType:   aws.String("extraction-process"),
+			Source:       aws.String("app.transform"),
+			DetailType:   aws.String("transform-process"),
 			Detail:       aws.String(string(details)),
 		}},
 	})
