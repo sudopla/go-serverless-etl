@@ -36,16 +36,16 @@ type DynamoItem struct {
 	City         string  `json:"city"`
 	Zip          string  `json:"zip"`
 	State        string  `json:"state"`
-	Beds         int     `json:"beds"`
-	Baths        int     `json:"baths"`
-	Sq_ft        int     `json:"sq__ft"`
+	Beds         int     `json:"beds,string"`
+	Baths        int     `json:"baths,string"`
+	Sq_ft        int     `json:"sq__ft,string"`
 	Type         string  `json:"type"`
 	SalesDate    string  `json:"sale_date"`
-	Price        int     `json:"price"`
+	Price        int     `json:"price,string"`
 	Latitude     float64 `json:"latitude"`
 	Longitude    float64 `json:"longitude"`
 	Status       string  `json:"status"`
-	PricePerSqFt int     `json:"price_per_sq_ft"`
+	PricePerSqFt int     `json:"price_per_sq_ft,string"`
 }
 
 var (
