@@ -83,7 +83,7 @@ export class EventBridgeLambdasStack extends cdk.Stack {
         }
       }
     })
-    loadRule.addTarget(new eventTargates.LambdaFunction(transformLambda, {
+    loadRule.addTarget(new eventTargates.LambdaFunction(loadLambda, {
       deadLetterQueue: new sqs.Queue(this, 'LoadEventDlq', {
         queueName: 'LoadEventDlq',
         encryption: sqs.QueueEncryption.KMS_MANAGED

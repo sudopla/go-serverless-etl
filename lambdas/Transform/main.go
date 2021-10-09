@@ -48,7 +48,7 @@ type OriginalItem struct {
 type TransformedItem struct {
 	OriginalItem
 	Status       string `json:"status"`
-	PricePerSqFt int    `json:"price_per_sq_ft"`
+	PricePerSqFt int    `json:"price_per_sq_ft,string"`
 }
 
 var (
@@ -70,11 +70,11 @@ func init() {
 }
 
 func handler(ctx context.Context, event BusEvent) {
-	// Apply transformations to item
 	var item = OriginalItem{}
 	if err := json.Unmarshal(event.Detail, &item); err != nil {
 		log.Fatalf("Could not unmarshall item - %s\n Error - ", string(event.Detail), err)
 	}
+	log.Printf("EventDetail - %+v\n", item)
 
 	log.Println("Parse date ...")
 	dLayout := "Mon Jan 2 15:04:05 MST 2006"

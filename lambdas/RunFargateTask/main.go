@@ -43,6 +43,8 @@ func init() {
 }
 
 func handler(ctx context.Context, s3Event events.S3Event) {
+	log.Printf("Event - %+v\n", s3Event)
+
 	for _, record := range s3Event.Records {
 		s3 := record.S3
 		bucket := s3.Bucket.Name
