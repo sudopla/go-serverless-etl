@@ -74,7 +74,7 @@ export class S3LambdaFargateStack extends cdk.Stack {
     })
 
     // Create container image
-    const containerImage = new ecs.AssetImage(path.join(__dirname, '..', '..', 'container'))
+    const containerImage = new ecs.AssetImage(path.join(__dirname, '..', 'container'))
 
     // Add container definition to fargate task
     const containerDefinition = taskDefinition.addContainer(containerName, {
@@ -92,7 +92,7 @@ export class S3LambdaFargateStack extends cdk.Stack {
      */
     const runFargateLambda = new goLambda.GoFunction(this, 'RunFarageTask', {
       functionName: 'RunFaragteTask',
-      entry: path.join(__dirname, '..', '..', 'lambdas', 'RunFargateTask'),
+      entry: path.join(__dirname, '..', 'lambdas', 'RunFargateTask'),
       reservedConcurrentExecutions: 10,
       environment: {
         CLUSTER_NAME: ecsClusterName,

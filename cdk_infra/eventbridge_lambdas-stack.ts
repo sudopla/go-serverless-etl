@@ -6,6 +6,7 @@ import * as events from '@aws-cdk/aws-events'
 import * as eventTargates from '@aws-cdk/aws-events-targets'
 import * as iam from '@aws-cdk/aws-iam'
 import * as goLambda from '@aws-cdk/aws-lambda-go'
+import * as lambdaDestinations from '@aws-cdk/aws-lambda-destinations'
 import * as sqs from '@aws-cdk/aws-sqs'
 import * as cdk from '@aws-cdk/core'
 import * as perms from './iam_perms'
@@ -24,11 +25,15 @@ export class EventBridgeLambdasStack extends cdk.Stack {
      */
     const transformLambda = new goLambda.GoFunction(this, 'TransformLambda', {
       functionName: 'Transform',
-      entry: path.join(__dirname, '..', '..', 'lambdas', 'Transform'),
+      entry: path.join(__dirname, '..', 'lambdas', 'Transform'),
       reservedConcurrentExecutions: 10,
       environment: {
         EVENTBRIDGE_BUS_NAME: props.eventBusName
-      }
+      },
+      onFailure: new lambdaDestinations.SqsDestination(new sqs.Queue(this, 'TransformQueue',{
+        queueName: 'TransformLambdaQueueDestination',
+        encryption: sqs.QueueEncryption.KMS_MANAGED
+      }))
     })
     transformLambda.addToRolePolicy(new iam.PolicyStatement({
       actions: perms.EVENTBRIDGE_PUT_EVENTS,
@@ -37,11 +42,15 @@ export class EventBridgeLambdasStack extends cdk.Stack {
 
     const loadLambda = new goLambda.GoFunction(this, 'LoadLambda', {
       functionName: 'Load',
-      entry: path.join(__dirname, '..', '..', 'lambdas', 'Load'),
+      entry: path.join(__dirname, '..', 'lambdas', 'Load'),
       reservedConcurrentExecutions: 10,
       environment: {
         TABLE_NAME: props.tableName
-      }
+      },
+      onFailure: new lambdaDestinations.SqsDestination(new sqs.Queue(this, 'LoadQueue',{
+        queueName: 'LoadLambdaQueueDestination',
+        encryption: sqs.QueueEncryption.KMS_MANAGED
+      }))
     })
     loadLambda.addToRolePolicy(new iam.PolicyStatement({
       actions: perms.Dynamo_WRITE_DATA_ACTIONS,
