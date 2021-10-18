@@ -4,10 +4,12 @@ This is an example of a Go application based on the CDK pattern [The EventBridge
 
 When a user uploads a spreadsheet with real state transactions [SacramentoRealeStateTransactions.csv](assets/test_files/SacramentoRealeStateTransactions.csv), the application will parse and add some information to each transaction and store them in a DynamoDB table. 
 
+Though in this case the application is processing and transforming data specific to real state transactions, you could use this pattern for similar applications, where you need to process CSV files and store the data in DynamoDB. 
+
 ### Architecture
 
-Every time a file is added to the S3 bucket `upload` folder, the `runFargateTask` Lambda gets triggered and starts the Fargate task. The task reads each row in the spreadsheet and sends them to the EventBridge bus. 
-The `Transform` Lambda then receives each transaction from the bus, parses some values and add additional information. The transformed item is later sent to the bus and the `Load` Lambda will store it in the DynamoDB table.   
+Every time a file is added to the `upload` folder in the S3 bucket, the `runFargateTask` Lambda gets triggered and starts the Fargate task. The task reads each row in the spreadsheet and sends them to the EventBridge bus eventually. 
+The `Transform` Lambda then receives each transaction from the bus, parses some values and adds additional information. The transformed item is later sent to the bus and the `Load` Lambda will store it in the DynamoDB table.   
 
 <img src="assets/img/go-serverless-etl.png" width="100%">
 
@@ -17,14 +19,12 @@ The Go container creates a predefined number of goroutines listening on a channe
 
 The `runFargateTask` Lambda has a reserved concurrency to guarantee it will always be able to start the Fargate Task. 
 
-EventBridge invokes the Transform and Load Lambda asynchronous, so if you reach the Lambda concurrency limit in the account and throttling starts to occurs, AWS will try to run the Lambdas for up to 6 hours. If the Lambda function fails with an error, then the item is sent the Queue destination. 
+EventBridge invokes Lambda functions asynchronous. If you reach the Lambda concurrency limit in the account and throttling starts to occurs, AWS will try to run the Lambdas for up to 6 hours. If the Lambda function fails with an error, then the item is sent the Queue destination. 
 
 ### Repo Structure
 
     .
     ├── cdk_infra                    # Cloud application resources (IaC)
-    |   |   
-    |   ├── lib                      # CDK Stacks and Constructs
     |
     ├── container                    # Go container
     |
@@ -43,7 +43,7 @@ EventBridge invokes the Transform and Load Lambda asynchronous, so if you reach 
 
 Please notice that if you are using a computer with an ARM-based processor like the Apple M1, the Fargate container will fail in the cloud.
 
-To solve this issue you need to deploy the stacks using CodePipeline. Please fork this repository, then go to the following file [pipeline-stack.ts](cdk_infra/lib/pipeline-stack) and enter your Github user.
+To solve this issue you need to deploy the stacks using CodePipeline. Please fork this repository, then open to the following file `cdk_infra/pipeline-stack.ts` and enter your Github user.
 
 ```typescript
 new CodePipelineStack(app, 'DeploymentPipelineStack', {
