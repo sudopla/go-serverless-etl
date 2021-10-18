@@ -9,7 +9,7 @@ Though in this case the application is processing and transforming data specific
 ### Architecture
 
 Every time a file is added to the `upload` folder in the S3 bucket, the `runFargateTask` Lambda gets triggered and starts the Fargate task. The task reads each row in the spreadsheet and sends them to the EventBridge bus. 
-The `Transform` Lambda then receives each transaction from the bus, parses some values and adds additional information. The transformed item is later sent to the bus and the `Load` Lambda will store it in the DynamoDB table.   
+The `Transform` Lambda then receives each transaction item from the bus, parses some values and adds additional information. The transformed item is later sent to the bus and the `Load` Lambda will store it in the DynamoDB table.   
 
 <img src="assets/img/go-serverless-etl.png" width="100%">
 
