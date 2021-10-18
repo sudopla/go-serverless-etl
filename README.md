@@ -6,18 +6,18 @@ When a user uploads a spreadsheet with real state transactions [SacramentoRealeS
 
 ### Architecture
 
-When an input file is uplaoded to the S3 bucket, the `runFargateTask` Lambda gets triggered and starts the Fargate task (container). The Fargate task reads each row in the spreadsheet and sends them to the EventBridge bus. 
-The `Transform` Lambda reads every transaction from the bus and modifies the item. The transformed item is later sent to the bus and the `Load` Lambda will store it in the DynamoDB table.   
+Every time a file is added to the S3 bucket `upload` folder, the `runFargateTask` Lambda gets triggered and starts the Fargate task. The task reads each row in the spreadsheet and sends them to the EventBridge bus. 
+The `Transform` Lambda then receives each transaction from the bus, parses some values and add additional information. The transformed item is later sent to the bus and the `Load` Lambda will store it in the DynamoDB table.   
 
-<img src="assets/img/go-serverless-etl.png" width="80%">
+<img src="assets/img/go-serverless-etl.png" width="100%">
 
 #### Scaling
 
 The Go container creates a predefined number of goroutines listening on a channel (worker pool). The rows of the spreadsheet are sent to this channel and the different goroutines will send them to the EventBridge bus. This is a way to control the number of request we sent per second to the bus. `PutEvents` has a soft limit of 10,000 requests per second in us-east. See [EventBride quotas per regions](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-quota.html#eb-putevents-limits)
 
-The `runFargateTask` Lambda has a reserved concurrency to guarantee you will always be able to start the Fargate Task. 
+The `runFargateTask` Lambda has a reserved concurrency to guarantee it will always be able to start the Fargate Task. 
 
-EventBridge invokes the Transform and Load Lambda asynchronous, so if you reach the Lambda concurrency limit in the account and throttling starts to happens, AWS will try to run the Lambdas for up to 6 hours. If the Lambda function fails with an error, then the item is sent the Queue destination. 
+EventBridge invokes the Transform and Load Lambda asynchronous, so if you reach the Lambda concurrency limit in the account and throttling starts to occurs, AWS will try to run the Lambdas for up to 6 hours. If the Lambda function fails with an error, then the item is sent the Queue destination. 
 
 ### Repo Structure
 
@@ -43,7 +43,7 @@ EventBridge invokes the Transform and Load Lambda asynchronous, so if you reach 
 
 Please notice that if you are using a computer with an ARM-based processor like the Apple M1, the Fargate container will fail in the cloud.
 
-To solve this issue you will need to deploy using CodePipeline. Please fork this repository, then go to the following file [pipeline-stack.ts](cdk_infra/lib/pipeline-stack) and enter your Github user.
+To solve this issue you need to deploy the stacks using CodePipeline. Please fork this repository, then go to the following file [pipeline-stack.ts](cdk_infra/lib/pipeline-stack) and enter your Github user.
 
 ```typescript
 new CodePipelineStack(app, 'DeploymentPipelineStack', {
@@ -52,7 +52,7 @@ new CodePipelineStack(app, 'DeploymentPipelineStack', {
 })
 ```
 
-You will also need to create a secret with the Github token so CodePiplein can create the Github webhook. Please name the secret `GithubCodePipelineToken` and assign the value to a `token` key.
+You will also need to create a secret with the Github token so CodePipeline can create the Github webhook. Please name the secret `GithubCodePipelineToken` and assign the value to a `token` key.
 The Github PAT needs to have the following permissions:
 
 ```
